@@ -4,6 +4,8 @@ Custom Lovelace card for Home Assistant that presents TDS before/after a filter,
 
 ## Features
 - Three-column layout showing live TDS in/out, temperatures, and flow
+- **Interactive:** Configure tap actions (more-info, navigate, url, service call) for every value and icon
+- **Customizable:** Set custom labels and icons for each sensor
 - Config validation ensures the card does not render without the primary flow sensor
 - Built-in UI editor with entity pickers and labels for every field
 - Graceful placeholders for `unknown`/`unavailable` states
@@ -50,6 +52,17 @@ tds_out_temp_entity: sensor.ro_temp_out
 | `tds_in_temp_entity` | no | – | Temperature sensor before the filter |
 | `tds_out_entity` | no | – | TDS sensor after the filter |
 | `tds_out_temp_entity` | no | – | Temperature sensor after the filter |
+
+### Per-sensor options
+For each of the sensors above (replace `*` with `tds_in`, `tds_in_temp`, `flow`, `tds_out`, or `tds_out_temp`), you can configure:
+
+| Option | Description |
+| --- | --- |
+| `label_*` | Custom label text (e.g. `label_tds_in`) |
+| `show_icon_*` | Toggle icon visibility (boolean) |
+| `icon_*` | Custom icon (e.g. `mdi:water`) |
+| `*_tap_action` | Action when clicking the value (more-info, navigate, url, call-service, none) |
+| `*_icon_tap_action` | Action when clicking the icon |
 
 Unavailable values appear as em dashes, and units are taken from Home Assistant attributes or fall back to sensible defaults (`ppm` for TDS, `°C` for temperature).
 
