@@ -33,15 +33,11 @@ class TdsFlowCard extends LitElement {
       }
 
       ha-card {
-        padding: 12px 16px;
-        box-sizing: border-box;
+        /* Standard card styling */
       }
 
-      .title {
-        font-size: 14px;
-        font-weight: 600;
-        margin-bottom: 8px;
-        opacity: 0.85;
+      .card-content {
+        padding: 16px;
       }
 
       .container {
@@ -63,12 +59,13 @@ class TdsFlowCard extends LitElement {
         justify-content: flex-start;
         align-items: center;
         gap: 4px;
+        color: var(--primary-text-color);
       }
 
       .temp-in {
         grid-area: temp-in;
         font-size: 12px;
-        opacity: 0.85;
+        color: var(--secondary-text-color);
         display: flex;
         justify-content: flex-start;
         align-items: center;
@@ -81,11 +78,12 @@ class TdsFlowCard extends LitElement {
         display: flex;
         flex-direction: column;
         align-items: center;
+        color: var(--primary-text-color);
       }
 
       .flow-label {
         font-size: 12px;
-        opacity: 0.8;
+        color: var(--secondary-text-color);
         margin-bottom: 2px;
       }
 
@@ -102,12 +100,13 @@ class TdsFlowCard extends LitElement {
         justify-content: flex-end;
         align-items: center;
         gap: 4px;
+        color: var(--primary-text-color);
       }
 
       .temp-out {
         grid-area: temp-out;
         font-size: 12px;
-        opacity: 0.85;
+        color: var(--secondary-text-color);
         display: flex;
         justify-content: flex-end;
         align-items: center;
@@ -115,22 +114,23 @@ class TdsFlowCard extends LitElement {
       }
 
       .label {
-        opacity: 0.8;
+        color: var(--secondary-text-color);
       }
 
       .value {
         font-weight: 600;
         cursor: pointer;
+        color: var(--primary-text-color);
       }
 
       .unit {
-        opacity: 0.75;
+        color: var(--secondary-text-color);
         font-size: 11px;
         margin-left: 2px;
       }
 
       .placeholder {
-        opacity: 0.6;
+        color: var(--secondary-text-color);
         font-style: italic;
       }
 
@@ -142,16 +142,7 @@ class TdsFlowCard extends LitElement {
         justify-content: center;
         transform: translateY(-1px);
         cursor: pointer;
-      }
-
-      .icon {
-        width: 16px;
-        height: 16px;
-      }
-
-      .icon-flow {
-        width: 20px;
-        height: 20px;
+        color: var(--paper-item-icon-color, #44739e);
       }
     `;
   }
@@ -291,11 +282,11 @@ class TdsFlowCard extends LitElement {
         : undefined;
 
     return html`
-      <ha-card>
-        ${c.name ? html`<div class="title">${c.name}</div>` : ""}
-        <div class="container">
-          <!-- Left column: TDS IN + temperature IN -->
-          <div class="tds-in">
+      <ha-card .header=${c.name}>
+        <div class="card-content">
+          <div class="container">
+            <!-- Left column: TDS IN + temperature IN -->
+            <div class="tds-in">
             ${showIconTdsIn
               ? html`<ha-icon
                   class="icon"
@@ -426,6 +417,7 @@ class TdsFlowCard extends LitElement {
             ${tempOut.unit ? html`<span class="unit">${tempOut.unit}</span>` : ""}
           </div>
         </div>
+        </div>
       </ha-card>
     `;
   }
@@ -493,6 +485,8 @@ class TdsFlowCardEditor extends LitElement {
       { name: "label_tds_in", selector: { text: {} } },
       { name: "show_icon_tds_in", selector: { boolean: {} } },
       { name: "icon_tds_in", selector: { icon: {} } },
+      { name: "tds_in_tap_action", selector: { ui_action: {} } },
+      { name: "tds_in_icon_tap_action", selector: { ui_action: {} } },
     ];
   }
 
@@ -503,6 +497,8 @@ class TdsFlowCardEditor extends LitElement {
       { name: "label_tds_in_temp", selector: { text: {} } },
       { name: "show_icon_tds_in_temp", selector: { boolean: {} } },
       { name: "icon_tds_in_temp", selector: { icon: {} } },
+      { name: "tds_in_temp_tap_action", selector: { ui_action: {} } },
+      { name: "tds_in_temp_icon_tap_action", selector: { ui_action: {} } },
     ];
   }
 
@@ -513,6 +509,8 @@ class TdsFlowCardEditor extends LitElement {
       { name: "label_flow", selector: { text: {} } },
       { name: "show_icon_flow", selector: { boolean: {} } },
       { name: "icon_flow", selector: { icon: {} } },
+      { name: "flow_tap_action", selector: { ui_action: {} } },
+      { name: "flow_icon_tap_action", selector: { ui_action: {} } },
     ];
   }
 
@@ -523,6 +521,8 @@ class TdsFlowCardEditor extends LitElement {
       { name: "label_tds_out", selector: { text: {} } },
       { name: "show_icon_tds_out", selector: { boolean: {} } },
       { name: "icon_tds_out", selector: { icon: {} } },
+      { name: "tds_out_tap_action", selector: { ui_action: {} } },
+      { name: "tds_out_icon_tap_action", selector: { ui_action: {} } },
     ];
   }
 
@@ -533,6 +533,8 @@ class TdsFlowCardEditor extends LitElement {
       { name: "label_tds_out_temp", selector: { text: {} } },
       { name: "show_icon_tds_out_temp", selector: { boolean: {} } },
       { name: "icon_tds_out_temp", selector: { icon: {} } },
+      { name: "tds_out_temp_tap_action", selector: { ui_action: {} } },
+      { name: "tds_out_temp_icon_tap_action", selector: { ui_action: {} } },
     ];
   }
 
@@ -586,6 +588,20 @@ class TdsFlowCardEditor extends LitElement {
       case "icon_tds_out_temp":
         return "Icon for Temp out";
 
+      case "tds_in_tap_action":
+      case "tds_in_temp_tap_action":
+      case "flow_tap_action":
+      case "tds_out_tap_action":
+      case "tds_out_temp_tap_action":
+        return "Tap behavior";
+
+      case "tds_in_icon_tap_action":
+      case "tds_in_temp_icon_tap_action":
+      case "flow_icon_tap_action":
+      case "tds_out_icon_tap_action":
+      case "tds_out_temp_icon_tap_action":
+        return "Icon tap behavior";
+
       default:
         return schema.name;
     }
@@ -596,40 +612,6 @@ class TdsFlowCardEditor extends LitElement {
     const newConfig = ev.detail.value;
     this._config = newConfig;
     fireEvent(this, "config-changed", { config: this._config });
-  }
-
-  _actionChanged(ev, key) {
-    ev.stopPropagation();
-    const value = ev.detail.value;
-    const cfg = { ...(this._config || {}) };
-
-    if (!value || value.action === "default") {
-      delete cfg[key];
-    } else {
-      cfg[key] = value;
-    }
-
-    this._config = cfg;
-    fireEvent(this, "config-changed", { config: this._config });
-  }
-
-  _renderActionEditors(data, tapKey, iconTapKey) {
-    return html`
-      <hui-action-editor
-        .hass=${this.hass}
-        .config=${data[tapKey]}
-        .label=${"Tap behavior"}
-        .actions=${["more-info", "navigate", "call-service", "url", "none"]}
-        @value-changed=${(ev) => this._actionChanged(ev, tapKey)}
-      ></hui-action-editor>
-      <hui-action-editor
-        .hass=${this.hass}
-        .config=${data[iconTapKey]}
-        .label=${"Icon tap behavior"}
-        .actions=${["more-info", "navigate", "call-service", "url", "none"]}
-        @value-changed=${(ev) => this._actionChanged(ev, iconTapKey)}
-      ></hui-action-editor>
-    `;
   }
 
   render() {
@@ -663,11 +645,6 @@ class TdsFlowCardEditor extends LitElement {
               .computeLabel=${this._computeLabel.bind(this)}
               @value-changed=${this._valueChanged}
             ></ha-form>
-            ${this._renderActionEditors(
-              data,
-              "tds_in_tap_action",
-              "tds_in_icon_tap_action"
-            )}
 
             <ha-form
               .hass=${this.hass}
@@ -676,11 +653,6 @@ class TdsFlowCardEditor extends LitElement {
               .computeLabel=${this._computeLabel.bind(this)}
               @value-changed=${this._valueChanged}
             ></ha-form>
-            ${this._renderActionEditors(
-              data,
-              "tds_in_temp_tap_action",
-              "tds_in_temp_icon_tap_action"
-            )}
           </div>
         </ha-expansion-panel>
 
@@ -695,11 +667,6 @@ class TdsFlowCardEditor extends LitElement {
               .computeLabel=${this._computeLabel.bind(this)}
               @value-changed=${this._valueChanged}
             ></ha-form>
-            ${this._renderActionEditors(
-              data,
-              "flow_tap_action",
-              "flow_icon_tap_action"
-            )}
           </div>
         </ha-expansion-panel>
 
@@ -714,11 +681,6 @@ class TdsFlowCardEditor extends LitElement {
               .computeLabel=${this._computeLabel.bind(this)}
               @value-changed=${this._valueChanged}
             ></ha-form>
-            ${this._renderActionEditors(
-              data,
-              "tds_out_tap_action",
-              "tds_out_icon_tap_action"
-            )}
 
             <ha-form
               .hass=${this.hass}
@@ -727,11 +689,6 @@ class TdsFlowCardEditor extends LitElement {
               .computeLabel=${this._computeLabel.bind(this)}
               @value-changed=${this._valueChanged}
             ></ha-form>
-            ${this._renderActionEditors(
-              data,
-              "tds_out_temp_tap_action",
-              "tds_out_temp_icon_tap_action"
-            )}
           </div>
         </ha-expansion-panel>
       </div>
