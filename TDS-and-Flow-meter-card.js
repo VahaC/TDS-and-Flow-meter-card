@@ -275,12 +275,6 @@ class TdsFlowCard extends LitElement {
     const labelTdsOut = c.label_tds_out || "TDS out";
     const labelTdsOutTemp = c.label_tds_out_temp || "Temp out";
 
-    const helpers = TdsFlowCard._helpers;
-    const actionHandler =
-      helpers && helpers.actionHandler
-        ? helpers.actionHandler({ hasHold: false, hasDoubleClick: false })
-        : undefined;
-
     return html`
       <ha-card .header=${c.name}>
         <div class="card-content">
@@ -291,17 +285,15 @@ class TdsFlowCard extends LitElement {
               ? html`<ha-icon
                   class="icon"
                   .icon=${iconTdsIn}
-                  @action=${(ev) =>
+                  @click=${(ev) =>
                     this._handleAction(ev, c.tds_in_icon_tap_action, c.tds_in_entity)}
-                  .actionHandler=${actionHandler}
                 ></ha-icon>`
               : ""}
             <span class="label">${labelTdsIn}:</span>
             <span
               class="value"
-              @action=${(ev) =>
+              @click=${(ev) =>
                 this._handleAction(ev, c.tds_in_tap_action, c.tds_in_entity)}
-              .actionHandler=${actionHandler}
               >${tdsIn.value}</span
             >
             ${tdsIn.unit ? html`<span class="unit">${tdsIn.unit}</span>` : ""}
@@ -312,25 +304,23 @@ class TdsFlowCard extends LitElement {
               ? html`<ha-icon
                   class="icon"
                   .icon=${iconTdsInTemp}
-                  @action=${(ev) =>
+                  @click=${(ev) =>
                     this._handleAction(
                       ev,
                       c.tds_in_temp_icon_tap_action,
                       c.tds_in_temp_entity
                     )}
-                  .actionHandler=${actionHandler}
                 ></ha-icon>`
               : ""}
             <span class="label">${labelTdsInTemp}:</span>
             <span
               class="value"
-              @action=${(ev) =>
+              @click=${(ev) =>
                 this._handleAction(
                   ev,
                   c.tds_in_temp_tap_action,
                   c.tds_in_temp_entity
                 )}
-              .actionHandler=${actionHandler}
               >${tempIn.value}</span
             >
             ${tempIn.unit ? html`<span class="unit">${tempIn.unit}</span>` : ""}
@@ -342,17 +332,15 @@ class TdsFlowCard extends LitElement {
               ? html`<ha-icon
                   class="icon-flow"
                   .icon=${iconFlow}
-                  @action=${(ev) =>
+                  @click=${(ev) =>
                     this._handleAction(ev, c.flow_icon_tap_action, c.flow_entity)}
-                  .actionHandler=${actionHandler}
                 ></ha-icon>`
               : ""}
             <div class="flow-label">${labelFlow}</div>
             <div
               class="flow-value"
-              @action=${(ev) =>
+              @click=${(ev) =>
                 this._handleAction(ev, c.flow_tap_action, c.flow_entity)}
-              .actionHandler=${actionHandler}
             >
               ${c.flow_entity
                 ? html`${flow.value}${flow.unit
@@ -368,21 +356,19 @@ class TdsFlowCard extends LitElement {
               ? html`<ha-icon
                   class="icon"
                   .icon=${iconTdsOut}
-                  @action=${(ev) =>
+                  @click=${(ev) =>
                     this._handleAction(
                       ev,
                       c.tds_out_icon_tap_action,
                       c.tds_out_entity
                     )}
-                  .actionHandler=${actionHandler}
                 ></ha-icon>`
               : ""}
             <span class="label">${labelTdsOut}:</span>
             <span
               class="value"
-              @action=${(ev) =>
+              @click=${(ev) =>
                 this._handleAction(ev, c.tds_out_tap_action, c.tds_out_entity)}
-              .actionHandler=${actionHandler}
               >${tdsOut.value}</span
             >
             ${tdsOut.unit ? html`<span class="unit">${tdsOut.unit}</span>` : ""}
@@ -393,25 +379,23 @@ class TdsFlowCard extends LitElement {
               ? html`<ha-icon
                   class="icon"
                   .icon=${iconTdsOutTemp}
-                  @action=${(ev) =>
+                  @click=${(ev) =>
                     this._handleAction(
                       ev,
                       c.tds_out_temp_icon_tap_action,
                       c.tds_out_temp_entity
                     )}
-                  .actionHandler=${actionHandler}
                 ></ha-icon>`
               : ""}
             <span class="label">${labelTdsOutTemp}:</span>
             <span
               class="value"
-              @action=${(ev) =>
+              @click=${(ev) =>
                 this._handleAction(
                   ev,
                   c.tds_out_temp_tap_action,
                   c.tds_out_temp_entity
                 )}
-              .actionHandler=${actionHandler}
               >${tempOut.value}</span
             >
             ${tempOut.unit ? html`<span class="unit">${tempOut.unit}</span>` : ""}
