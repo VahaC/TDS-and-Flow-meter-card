@@ -1,4 +1,4 @@
-// TDS-and-Flow-meter-card.js
+// tds-flow-card.js
 // Home Assistant Lovelace custom card: TDS & Flow monitor
 
 import { LitElement, html, css } from "https://unpkg.com/lit-element@2.5.1/lit-element.js?module";
@@ -237,7 +237,8 @@ class TdsFlowCard extends LitElement {
 }
 
 /**
- * Card editor: allows to pick entities in the UI when adding/editing the card
+ * Card editor: allows to pick entities in the UI when adding/editing the card.
+ * This version uses plain <select> elements to avoid lazy-loading issues with ha-entity-picker.
  */
 class TdsFlowCardEditor extends LitElement {
   static get properties() {
@@ -266,6 +267,33 @@ class TdsFlowCardEditor extends LitElement {
         font-size: 13px;
         font-weight: 600;
         opacity: 0.85;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .field-label {
+        font-size: 12px;
+        opacity: 0.8;
+      }
+
+      .text-input,
+      .select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 8px;
+        border-radius: 4px;
+        border: 1px solid var(--primary-text-color, #9e9e9e);
+        background: rgba(0, 0, 0, 0.1);
+        color: inherit;
+        font: inherit;
+      }
+
+      .select {
+        padding-right: 24px;
       }
     `;
   }
@@ -328,67 +356,66 @@ class TdsFlowCardEditor extends LitElement {
       ...(this._config || {}),
     };
 
+    // Collect all sensor entities for dropdowns
+    const sensorEntities = Object.keys(this.hass.states)
+      .filter((e) => e.startsWith("sensor."))
+      .sort((a, b) => a.localeCompare(b));
+
+    const renderSelect = (label, configKey, value) => html`
+      <label class="field">
+        <span class="field-label">${label}</span>
+        <select
+          class="select"
+          .configValue=${configKey}
+          .value=${value || ""}
+          @change=${this._valueChanged}
+        >
+          <option value="">— Not set —</option>
+          ${sensorEntities.map(
+            (entityId) => html`
+              <option value=${entityId}>${entityId}</option>
+            `
+          )}
+        </select>
+      </label>
+    `;
+
     return html`
       <div class="card-config">
-        <ha-textfield
-          label="Name (optional)"
-          .value=${c.name || ""}
-          .configValue=${"name"}
-          @input=${this._valueChanged}
-        ></ha-textfield>
+        <label class="field">
+          <span class="field-label">Name (optional)</span>
+          <input
+            class="text-input"
+            type="text"
+            .value=${c.name || ""}
+            .configValue=${"name"}
+            @input=${this._valueChanged}
+          />
+        </label>
 
         <div class="group">
           <div class="group-label">TDS In side</div>
-          <ha-entity-picker
-            .hass=${this.hass}
-            .label=${"TDS in sensor"}
-            .value=${c.tds_in_entity || ""}
-            .configValue=${"tds_in_entity"}
-            .includeDomains=${["sensor"]}
-            @value-changed=${this._valueChanged}
-          ></ha-entity-picker>
-
-          <ha-entity-picker
-            .hass=${this.hass}
-            .label=${"TDS in temperature sensor"}
-            .value=${c.tds_in_temp_entity || ""}
-            .configValue=${"tds_in_temp_entity"}
-            .includeDomains=${["sensor"]}
-            @value-changed=${this._valueChanged}
-          ></ha-entity-picker>
+          ${renderSelect("TDS in sensor", "tds_in_entity", c.tds_in_entity)}
+          ${renderSelect(
+            "TDS in temperature sensor",
+            "tds_in_temp_entity",
+            c.tds_in_temp_entity
+          )}
         </div>
 
         <div class="group">
           <div class="group-label">Flow</div>
-          <ha-entity-picker
-            .hass=${this.hass}
-            .label=${"Flow sensor (required)"}
-            .value=${c.flow_entity || ""}
-            .configValue=${"flow_entity"}
-            .includeDomains=${["sensor"]}
-            @value-changed=${this._valueChanged}
-          ></ha-entity-picker>
+          ${renderSelect("Flow sensor (required)", "flow_entity", c.flow_entity)}
         </div>
 
         <div class="group">
           <div class="group-label">TDS Out side</div>
-          <ha-entity-picker
-            .hass=${this.hass}
-            .label=${"TDS out sensor"}
-            .value=${c.tds_out_entity || ""}
-            .configValue=${"tds_out_entity"}
-            .includeDomains=${["sensor"]}
-            @value-changed=${this._valueChanged}
-          ></ha-entity-picker>
-
-          <ha-entity-picker
-            .hass=${this.hass}
-            .label=${"TDS out temperature sensor"}
-            .value=${c.tds_out_temp_entity || ""}
-            .configValue=${"tds_out_temp_entity"}
-            .includeDomains=${["sensor"]}
-            @value-changed=${this._valueChanged}
-          ></ha-entity-picker>
+          ${renderSelect("TDS out sensor", "tds_out_entity", c.tds_out_entity)}
+          ${renderSelect(
+            "TDS out temperature sensor",
+            "tds_out_temp_entity",
+            c.tds_out_temp_entity
+          )}
         </div>
       </div>
     `;
