@@ -130,15 +130,24 @@ class TdsFlowCard extends LitElement {
         font-style: italic;
       }
 
+      /* Icon alignment tweaks */
+      .icon,
+      .icon-flow {
+        display: inline-flex;           /* Center icon SVG inside its box */
+        align-items: center;
+        justify-content: center;
+        transform: translateY(-1px);   /* Slightly lift relative to text baseline */
+      }
+
       .icon {
-        width: 18px;
-        height: 18px;
+        width: 16px;
+        height: 16px;
       }
 
       .icon-flow {
-        width: 22px;
-        height: 22px;
-        margin-bottom: 2px;
+        width: 20px;
+        height: 20px;
+        margin-bottom: 0;
       }
     `;
   }
@@ -198,7 +207,6 @@ class TdsFlowCard extends LitElement {
       const unit = stateObj.attributes?.unit_of_measurement || fallbackUnit || "";
       let display = state;
 
-      // 1) Try to use built-in Home Assistant formatter
       try {
         if (this.hass && typeof this.hass.formatEntityState === "function") {
           display = this.hass.formatEntityState(stateObj);
@@ -207,21 +215,18 @@ class TdsFlowCard extends LitElement {
             const valuePart = display.slice(0, idx).trim();
             return { value: valuePart, unit };
           }
-          // If we cannot split, show full display string as value and no separate unit
           return { value: display, unit: "" };
         }
       } catch (e) {
-        // Ignore formatter errors and fall back below
+        // ignore
       }
 
-      // 2) Fallback: use display_precision attribute if available
       const precision = stateObj.attributes?.display_precision;
       const num = Number(state);
       if (typeof precision === "number" && Number.isFinite(num)) {
         return { value: num.toFixed(precision), unit };
       }
 
-      // 3) Final fallback: raw state
       return { value: state, unit };
     };
 
