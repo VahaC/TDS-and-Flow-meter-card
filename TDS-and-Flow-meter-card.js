@@ -24,8 +24,6 @@ class TdsFlowCard extends LitElement {
     };
   }
 
-  static _helpers;
-
   static get styles() {
     return css`
       :host {
@@ -147,17 +145,6 @@ class TdsFlowCard extends LitElement {
     `;
   }
 
-  connectedCallback() {
-    super.connectedCallback();
-    // Load card helpers once to use handleAction + actionHandler
-    if (!TdsFlowCard._helpers && window.loadCardHelpers) {
-      window.loadCardHelpers().then((helpers) => {
-        TdsFlowCard._helpers = helpers;
-        this.requestUpdate();
-      });
-    }
-  }
-
   setConfig(config) {
     if (!config || typeof config !== "object") {
       throw new Error("Invalid configuration for tds-flow-card");
@@ -225,16 +212,41 @@ class TdsFlowCard extends LitElement {
   }
 
   _handleAction(ev, actionConfig, entityId) {
-    const helpers = TdsFlowCard._helpers;
-    if (!helpers || !this.hass || !entityId) return;
+    if (ev) {
+      ev.stopPropagation();
+    }
+    if (!this.hass || !entityId) return;
 
-    const action = ev.detail?.action || "tap";
-    const config = {
-      entity: entityId,
-      tap_action: actionConfig || { action: "more-info" },
-    };
+    const config = actionConfig || { action: "more-info" };
+    const action = config.action || "more-info";
 
-    helpers.handleAction(this, this.hass, config, action);
+    switch (action) {
+      case "more-info":
+        fireEvent(this, "hass-more-info", { entityId });
+        break;
+      case "navigate":
+        if (config.navigation_path) {
+          window.history.pushState(null, "", config.navigation_path);
+          fireEvent(window, "location-changed");
+        }
+        break;
+      case "url":
+        if (config.url_path) {
+          window.open(config.url_path);
+        }
+        break;
+      case "call-service":
+        if (config.service) {
+          const [domain, service] = config.service.split(".");
+          this.hass.callService(domain, service, config.data || {});
+        }
+        break;
+      case "toggle":
+        this.hass.callService("homeassistant", "toggle", { entity_id: entityId });
+        break;
+      default:
+        break;
+    }
   }
 
   render() {
