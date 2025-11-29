@@ -1,0 +1,8 @@
+{
+  "name": "TDS & Flow Card",
+  "content_in_root": true,
+  "filename": "TDS-and-Flow-meter-card.js",
+  "render_readme": true,
+  "type": "plugin",
+  "card_version": "0.0.1"
+}
