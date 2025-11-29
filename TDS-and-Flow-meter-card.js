@@ -1,5 +1,5 @@
 // TDS-and-Flow-meter-card.js
-// Home Assistant Lovelace custom card: TDS & Flow monitor
+// Home Assistant Lovelace custom card: TDS & Flow monitor with per-sensor icons and labels
 
 import { LitElement, html, css } from "https://unpkg.com/lit-element@2.5.1/lit-element.js?module";
 
@@ -58,7 +58,7 @@ class TdsFlowCard extends LitElement {
         font-size: 13px;
         display: flex;
         justify-content: flex-start;
-        align-items: baseline;
+        align-items: center;
         gap: 4px;
       }
 
@@ -68,13 +68,16 @@ class TdsFlowCard extends LitElement {
         opacity: 0.85;
         display: flex;
         justify-content: flex-start;
-        align-items: baseline;
+        align-items: center;
         gap: 4px;
       }
 
       .flow {
         grid-area: flow;
         text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
       }
 
       .flow-label {
@@ -94,7 +97,7 @@ class TdsFlowCard extends LitElement {
         font-size: 13px;
         display: flex;
         justify-content: flex-end;
-        align-items: baseline;
+        align-items: center;
         gap: 4px;
       }
 
@@ -104,7 +107,7 @@ class TdsFlowCard extends LitElement {
         opacity: 0.85;
         display: flex;
         justify-content: flex-end;
-        align-items: baseline;
+        align-items: center;
         gap: 4px;
       }
 
@@ -126,6 +129,17 @@ class TdsFlowCard extends LitElement {
         opacity: 0.6;
         font-style: italic;
       }
+
+      .icon {
+        width: 18px;
+        height: 18px;
+      }
+
+      .icon-flow {
+        width: 22px;
+        height: 22px;
+        margin-bottom: 2px;
+      }
     `;
   }
 
@@ -134,10 +148,8 @@ class TdsFlowCard extends LitElement {
       throw new Error("Invalid configuration for tds-flow-card");
     }
 
-    this._config = {
-      name: "TDS & Flow",
-      ...config,
-    };
+    // Keep exactly what UI passed, no forced defaults here
+    this._config = { ...config };
   }
 
   getCardSize() {
@@ -219,26 +231,56 @@ class TdsFlowCard extends LitElement {
     const tdsOut = formatValue(getStateObj(c.tds_out_entity), "ppm");
     const tempOut = formatValue(getStateObj(c.tds_out_temp_entity), "°C");
 
+    // Per-sensor icon visibility
+    const showIconTdsIn = !!c.show_icon_tds_in;
+    const showIconTdsInTemp = !!c.show_icon_tds_in_temp;
+    const showIconFlow = !!c.show_icon_flow;
+    const showIconTdsOut = !!c.show_icon_tds_out;
+    const showIconTdsOutTemp = !!c.show_icon_tds_out_temp;
+
+    // Per-sensor icon overrides with defaults
+    const iconTdsIn = c.icon_tds_in || "mdi:water-opacity";
+    const iconTdsInTemp = c.icon_tds_in_temp || "mdi:thermometer";
+    const iconFlow = c.icon_flow || "mdi:water";
+    const iconTdsOut = c.icon_tds_out || "mdi:water-opacity";
+    const iconTdsOutTemp = c.icon_tds_out_temp || "mdi:thermometer";
+
+    // Per-sensor label overrides with defaults
+    const labelTdsIn = c.label_tds_in || "TDS in";
+    const labelTdsInTemp = c.label_tds_in_temp || "Temp in";
+    const labelFlow = c.label_flow || "Flow";
+    const labelTdsOut = c.label_tds_out || "TDS out";
+    const labelTdsOutTemp = c.label_tds_out_temp || "Temp out";
+
     return html`
       <ha-card>
         ${c.name ? html`<div class="title">${c.name}</div>` : ""}
         <div class="container">
           <!-- Left column: TDS IN + temperature IN -->
           <div class="tds-in">
-            <span class="label">TDS in:</span>
+            ${showIconTdsIn
+              ? html`<ha-icon class="icon" .icon=${iconTdsIn}></ha-icon>`
+              : ""}
+            <span class="label">${labelTdsIn}:</span>
             <span class="value">${tdsIn.value}</span>
             ${tdsIn.unit ? html`<span class="unit">${tdsIn.unit}</span>` : ""}
           </div>
 
           <div class="temp-in">
-            <span class="label">Temp in:</span>
+            ${showIconTdsInTemp
+              ? html`<ha-icon class="icon" .icon=${iconTdsInTemp}></ha-icon>`
+              : ""}
+            <span class="label">${labelTdsInTemp}:</span>
             <span class="value">${tempIn.value}</span>
             ${tempIn.unit ? html`<span class="unit">${tempIn.unit}</span>` : ""}
           </div>
 
           <!-- Center: FLOW -->
           <div class="flow">
-            <div class="flow-label">Flow</div>
+            ${showIconFlow
+              ? html`<ha-icon class="icon-flow" .icon=${iconFlow}></ha-icon>`
+              : ""}
+            <div class="flow-label">${labelFlow}</div>
             <div class="flow-value">
               ${c.flow_entity
                 ? html`${flow.value}${flow.unit
@@ -250,13 +292,19 @@ class TdsFlowCard extends LitElement {
 
           <!-- Right column: TDS OUT + temperature OUT -->
           <div class="tds-out">
-            <span class="label">TDS out:</span>
+            ${showIconTdsOut
+              ? html`<ha-icon class="icon" .icon=${iconTdsOut}></ha-icon>`
+              : ""}
+            <span class="label">${labelTdsOut}:</span>
             <span class="value">${tdsOut.value}</span>
             ${tdsOut.unit ? html`<span class="unit">${tdsOut.unit}</span>` : ""}
           </div>
 
           <div class="temp-out">
-            <span class="label">Temp out:</span>
+            ${showIconTdsOutTemp
+              ? html`<ha-icon class="icon" .icon=${iconTdsOutTemp}></ha-icon>`
+              : ""}
+            <span class="label">${labelTdsOutTemp}:</span>
             <span class="value">${tempOut.value}</span>
             ${tempOut.unit ? html`<span class="unit">${tempOut.unit}</span>` : ""}
           </div>
@@ -271,7 +319,8 @@ class TdsFlowCard extends LitElement {
 }
 
 /**
- * Editor based on standard Home Assistant components: ha-form + entity selectors.
+ * Editor with 3 collapsible groups (TDS in, Flow, TDS out),
+ * based on ha-form selectors and standard HA components.
  */
 class TdsFlowCardEditor extends LitElement {
   static get properties() {
@@ -281,50 +330,155 @@ class TdsFlowCardEditor extends LitElement {
     };
   }
 
+  static get styles() {
+    return css`
+      .card-config {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      details {
+        border-radius: 4px;
+        border: 1px solid var(--divider-color, rgba(255, 255, 255, 0.12));
+        padding: 4px 8px;
+      }
+
+      summary {
+        cursor: pointer;
+        font-weight: 600;
+        padding: 4px 0;
+        list-style: none;
+      }
+
+      summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .group-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .group-title {
+        font-size: 13px;
+      }
+
+      .group-body {
+        padding-top: 4px;
+        padding-bottom: 4px;
+      }
+
+      ha-form {
+        --ha-form-padding: 0;
+      }
+    `;
+  }
+
   setConfig(config) {
     this._config = config || {};
   }
 
-  get _schema() {
+  // Schema for top-level (card) settings
+  get _schemaBase() {
+    return [{ name: "name", selector: { text: {} } }];
+  }
+
+  // Schema for TDS in group
+  get _schemaTdsIn() {
     return [
-      { name: "name", selector: { text: {} } },
-      {
-        name: "tds_in_entity",
-        selector: { entity: { domain: "sensor" } },
-      },
-      {
-        name: "tds_in_temp_entity",
-        selector: { entity: { domain: "sensor" } },
-      },
-      {
-        name: "flow_entity",
-        selector: { entity: { domain: "sensor" } },
-      },
-      {
-        name: "tds_out_entity",
-        selector: { entity: { domain: "sensor" } },
-      },
-      {
-        name: "tds_out_temp_entity",
-        selector: { entity: { domain: "sensor" } },
-      },
+      { name: "tds_in_entity", selector: { entity: { domain: "sensor" } } },
+      { name: "label_tds_in", selector: { text: {} } },
+      { name: "show_icon_tds_in", selector: { boolean: {} } },
+      { name: "icon_tds_in", selector: { icon: {} } },
+
+      { name: "tds_in_temp_entity", selector: { entity: { domain: "sensor" } } },
+      { name: "label_tds_in_temp", selector: { text: {} } },
+      { name: "show_icon_tds_in_temp", selector: { boolean: {} } },
+      { name: "icon_tds_in_temp", selector: { icon: {} } },
+    ];
+  }
+
+  // Schema for Flow group
+  get _schemaFlow() {
+    return [
+      { name: "flow_entity", selector: { entity: { domain: "sensor" } } },
+      { name: "label_flow", selector: { text: {} } },
+      { name: "show_icon_flow", selector: { boolean: {} } },
+      { name: "icon_flow", selector: { icon: {} } },
+    ];
+  }
+
+  // Schema for TDS out group
+  get _schemaTdsOut() {
+    return [
+      { name: "tds_out_entity", selector: { entity: { domain: "sensor" } } },
+      { name: "label_tds_out", selector: { text: {} } },
+      { name: "show_icon_tds_out", selector: { boolean: {} } },
+      { name: "icon_tds_out", selector: { icon: {} } },
+
+      { name: "tds_out_temp_entity", selector: { entity: { domain: "sensor" } } },
+      { name: "label_tds_out_temp", selector: { text: {} } },
+      { name: "show_icon_tds_out_temp", selector: { boolean: {} } },
+      { name: "icon_tds_out_temp", selector: { icon: {} } },
     ];
   }
 
   _computeLabel(schema) {
     switch (schema.name) {
+      // Base
       case "name":
-        return "Name (optional)";
+        return "Card title (optional)";
+
+      // TDS in
       case "tds_in_entity":
         return "TDS in sensor";
+      case "label_tds_in":
+        return "Label for TDS in (optional)";
+      case "show_icon_tds_in":
+        return "Show icon for TDS in";
+      case "icon_tds_in":
+        return "Icon for TDS in";
+
       case "tds_in_temp_entity":
-        return "TDS in temperature sensor";
+        return "Temp in sensor";
+      case "label_tds_in_temp":
+        return "Label for Temp in (optional)";
+      case "show_icon_tds_in_temp":
+        return "Show icon for Temp in";
+      case "icon_tds_in_temp":
+        return "Icon for Temp in";
+
+      // Flow
       case "flow_entity":
-        return "Flow sensor (required)";
+        return "Flow sensor";
+      case "label_flow":
+        return "Label for Flow (optional)";
+      case "show_icon_flow":
+        return "Show icon for Flow";
+      case "icon_flow":
+        return "Icon for Flow";
+
+      // TDS out
       case "tds_out_entity":
         return "TDS out sensor";
+      case "label_tds_out":
+        return "Label for TDS out (optional)";
+      case "show_icon_tds_out":
+        return "Show icon for TDS out";
+      case "icon_tds_out":
+        return "Icon for TDS out";
+
       case "tds_out_temp_entity":
-        return "TDS out temperature sensor";
+        return "Temp out sensor";
+      case "label_tds_out_temp":
+        return "Label for Temp out (optional)";
+      case "show_icon_tds_out_temp":
+        return "Show icon for Temp out";
+      case "icon_tds_out_temp":
+        return "Icon for Temp out";
+
       default:
         return schema.name;
     }
@@ -343,23 +497,74 @@ class TdsFlowCardEditor extends LitElement {
     }
 
     const data = {
-      name: "TDS & Flow",
-      tds_in_entity: "",
-      tds_in_temp_entity: "",
-      flow_entity: "",
-      tds_out_entity: "",
-      tds_out_temp_entity: "",
       ...(this._config || {}),
     };
 
     return html`
-      <ha-form
-        .hass=${this.hass}
-        .data=${data}
-        .schema=${this._schema}
-        .computeLabel=${this._computeLabel.bind(this)}
-        @value-changed=${this._valueChanged}
-      ></ha-form>
+      <div class="card-config">
+        <!-- Base/card-level settings -->
+        <ha-form
+          .hass=${this.hass}
+          .data=${data}
+          .schema=${this._schemaBase}
+          .computeLabel=${this._computeLabel.bind(this)}
+          @value-changed=${this._valueChanged}
+        ></ha-form>
+
+        <!-- Collapsible group: TDS in -->
+        <details open>
+          <summary>
+            <div class="group-header">
+              <span class="group-title">TDS in</span>
+            </div>
+          </summary>
+          <div class="group-body">
+            <ha-form
+              .hass=${this.hass}
+              .data=${data}
+              .schema=${this._schemaTdsIn}
+              .computeLabel=${this._computeLabel.bind(this)}
+              @value-changed=${this._valueChanged}
+            ></ha-form>
+          </div>
+        </details>
+
+        <!-- Collapsible group: Flow -->
+        <details>
+          <summary>
+            <div class="group-header">
+              <span class="group-title">Flow</span>
+            </div>
+          </summary>
+          <div class="group-body">
+            <ha-form
+              .hass=${this.hass}
+              .data=${data}
+              .schema=${this._schemaFlow}
+              .computeLabel=${this._computeLabel.bind(this)}
+              @value-changed=${this._valueChanged}
+            ></ha-form>
+          </div>
+        </details>
+
+        <!-- Collapsible group: TDS out -->
+        <details>
+          <summary>
+            <div class="group-header">
+              <span class="group-title">TDS out</span>
+            </div>
+          </summary>
+          <div class="group-body">
+            <ha-form
+              .hass=${this.hass}
+              .data=${data}
+              .schema=${this._schemaTdsOut}
+              .computeLabel=${this._computeLabel.bind(this)}
+              @value-changed=${this._valueChanged}
+            ></ha-form>
+          </div>
+        </details>
+      </div>
     `;
   }
 }
@@ -378,5 +583,6 @@ window.customCards = window.customCards || [];
 window.customCards.push({
   type: "tds-flow-card",
   name: "TDS & Flow Card",
-  description: "Shows TDS in/out, temperatures and flow in a compact 3-column layout",
+  description:
+    "Shows TDS in/out, temperatures and flow in a compact 3-column layout with per-sensor icons and labels",
 });
