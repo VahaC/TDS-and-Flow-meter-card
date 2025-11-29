@@ -653,9 +653,9 @@ class TdsFlowCardEditor extends LitElement {
         ></ha-form>
 
         <!-- TDS in group -->
-        <ha-expansion-panel expanded>
+        <ha-expansion-panel outlined expanded>
           <div slot="header" class="group-title">TDS in</div>
-          <div slot="content" class="group-body">
+          <div class="group-body">
             <ha-form
               .hass=${this.hass}
               .data=${data}
@@ -685,9 +685,9 @@ class TdsFlowCardEditor extends LitElement {
         </ha-expansion-panel>
 
         <!-- Flow group -->
-        <ha-expansion-panel>
+        <ha-expansion-panel outlined>
           <div slot="header" class="group-title">Flow</div>
-          <div slot="content" class="group-body">
+          <div class="group-body">
             <ha-form
               .hass=${this.hass}
               .data=${data}
@@ -704,9 +704,9 @@ class TdsFlowCardEditor extends LitElement {
         </ha-expansion-panel>
 
         <!-- TDS out group -->
-        <ha-expansion-panel>
+        <ha-expansion-panel outlined>
           <div slot="header" class="group-title">TDS out</div>
-          <div slot="content" class="group-body">
+          <div class="group-body">
             <ha-form
               .hass=${this.hass}
               .data=${data}
