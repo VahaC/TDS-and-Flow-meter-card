@@ -1,7 +1,19 @@
-// tds-flow-card.js
+// TDS-and-Flow-meter-card.js
 // Home Assistant Lovelace custom card: TDS & Flow monitor
 
 import { LitElement, html, css } from "https://unpkg.com/lit-element@2.5.1/lit-element.js?module";
+
+// Simple helper to fire Home Assistant events (similar to fireEvent from custom-card-helpers)
+const fireEvent = (node, type, detail = {}, options = {}) => {
+  const event = new CustomEvent(type, {
+    bubbles: options.bubbles ?? true,
+    composed: options.composed ?? true,
+    cancelable: options.cancelable ?? false,
+    detail,
+  });
+  node.dispatchEvent(event);
+  return event;
+};
 
 class TdsFlowCard extends LitElement {
   static get properties() {
@@ -107,6 +119,7 @@ class TdsFlowCard extends LitElement {
       .unit {
         opacity: 0.75;
         font-size: 11px;
+        margin-left: 2px;
       }
 
       .placeholder {
@@ -117,16 +130,12 @@ class TdsFlowCard extends LitElement {
   }
 
   setConfig(config) {
-    // Basic validation for required config
     if (!config || typeof config !== "object") {
       throw new Error("Invalid configuration for tds-flow-card");
     }
 
-    // Flow is the core of the card, so it is required
-    if (!config.flow_entity) {
-      throw new Error("You need to define flow_entity in the card configuration");
-    }
-
+    // Flow is the core of the card, but we do not throw here,
+    // to avoid red error when user just created the card via UI.
     this._config = {
       name: "TDS & Flow",
       ...config,
@@ -134,12 +143,10 @@ class TdsFlowCard extends LitElement {
   }
 
   getCardSize() {
-    // Roughly how many grid rows the card occupies
     return 2;
   }
 
   static getStubConfig(hass, entities) {
-    // Try to guess some default entities when user adds the card from the UI
     const all = entities || Object.keys(hass.states || {});
     const sensors = all.filter((e) => e.startsWith("sensor."));
 
@@ -185,8 +192,6 @@ class TdsFlowCard extends LitElement {
     const tdsOut = formatValue(getStateObj(c.tds_out_entity), "ppm");
     const tempOut = formatValue(getStateObj(c.tds_out_temp_entity), "°C");
 
-    const hasFlowEntity = !!c.flow_entity;
-
     return html`
       <ha-card>
         ${c.name ? html`<div class="title">${c.name}</div>` : ""}
@@ -208,8 +213,11 @@ class TdsFlowCard extends LitElement {
           <div class="flow">
             <div class="flow-label">Flow</div>
             <div class="flow-value">
-              ${hasFlowEntity ? flow.value : html`<span class="placeholder">No flow_entity</span>`}
-              ${flow.unit ? html`<span class="unit">${flow.unit}</span>` : ""}
+              ${c.flow_entity
+                ? html`${flow.value}${flow.unit
+                    ? html`<span class="unit">${flow.unit}</span>`
+                    : ""}`
+                : html`<span class="placeholder">Select flow entity in editor</span>`}
             </div>
           </div>
 
@@ -230,15 +238,14 @@ class TdsFlowCard extends LitElement {
     `;
   }
 
-  // Return the editor element for the UI card editor
   static getConfigElement() {
     return document.createElement("tds-flow-card-editor");
   }
 }
 
 /**
- * Card editor: allows to pick entities in the UI when adding/editing the card.
- * This version uses plain <select> elements to avoid lazy-loading issues with ha-entity-picker.
+ * Editor based on standard Home Assistant components: ha-form + entity selectors.
+ * This uses the same UX as built-in cards.
  */
 class TdsFlowCardEditor extends LitElement {
   static get properties() {
@@ -248,102 +255,61 @@ class TdsFlowCardEditor extends LitElement {
     };
   }
 
-  static get styles() {
-    return css`
-      .card-config {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-        padding: 8px 0;
-      }
-
-      .group {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      .group-label {
-        font-size: 13px;
-        font-weight: 600;
-        opacity: 0.85;
-      }
-
-      .field {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-
-      .field-label {
-        font-size: 12px;
-        opacity: 0.8;
-      }
-
-      .text-input,
-      .select {
-        width: 100%;
-        box-sizing: border-box;
-        padding: 6px 8px;
-        border-radius: 4px;
-        border: 1px solid var(--primary-text-color, #9e9e9e);
-        background: rgba(0, 0, 0, 0.1);
-        color: inherit;
-        font: inherit;
-      }
-
-      .select {
-        padding-right: 24px;
-      }
-    `;
-  }
-
   setConfig(config) {
-    this._config = { ...config };
+    this._config = config || {};
   }
 
-  get _defaultConfig() {
-    return {
-      name: "TDS & Flow",
-      tds_in_entity: "",
-      tds_in_temp_entity: "",
-      flow_entity: "",
-      tds_out_entity: "",
-      tds_out_temp_entity: "",
-    };
+  get _schema() {
+    // Each field uses HA selector => internally it shows proper entity picker
+    return [
+      { name: "name", selector: { text: {} } },
+      {
+        name: "tds_in_entity",
+        selector: { entity: { domain: "sensor" } },
+      },
+      {
+        name: "tds_in_temp_entity",
+        selector: { entity: { domain: "sensor" } },
+      },
+      {
+        name: "flow_entity",
+        selector: { entity: { domain: "sensor" } },
+      },
+      {
+        name: "tds_out_entity",
+        selector: { entity: { domain: "sensor" } },
+      },
+      {
+        name: "tds_out_temp_entity",
+        selector: { entity: { domain: "sensor" } },
+      },
+    ];
+  }
+
+  _computeLabel(schema) {
+    switch (schema.name) {
+      case "name":
+        return "Name (optional)";
+      case "tds_in_entity":
+        return "TDS in sensor";
+      case "tds_in_temp_entity":
+        return "TDS in temperature sensor";
+      case "flow_entity":
+        return "Flow sensor (required)";
+      case "tds_out_entity":
+        return "TDS out sensor";
+      case "tds_out_temp_entity":
+        return "TDS out temperature sensor";
+      default:
+        return schema.name;
+    }
   }
 
   _valueChanged(ev) {
-    if (!this._config) {
-      this._config = this._defaultConfig;
-    }
-
-    const target = ev.target;
-    const configKey = target.configValue;
-    if (!configKey) return;
-
-    const value =
-      ev.detail && ev.detail.value !== undefined ? ev.detail.value : target.value;
-
-    // Avoid unnecessary updates
-    if (this._config[configKey] === value) return;
-
-    if (value === "" || value === undefined) {
-      delete this._config[configKey];
-    } else {
-      this._config = {
-        ...this._config,
-        [configKey]: value,
-      };
-    }
-
-    this.dispatchEvent(
-      new CustomEvent("config-changed", {
-        detail: { config: this._config },
-        bubbles: true,
-        composed: true,
-      })
-    );
+    if (!this.hass) return;
+    const newConfig = ev.detail.value;
+    this._config = newConfig;
+    fireEvent(this, "config-changed", { config: this._config });
   }
 
   render() {
@@ -351,73 +317,24 @@ class TdsFlowCardEditor extends LitElement {
       return html``;
     }
 
-    const c = {
-      ...this._defaultConfig,
+    const data = {
+      name: "TDS & Flow",
+      tds_in_entity: "",
+      tds_in_temp_entity: "",
+      flow_entity: "",
+      tds_out_entity: "",
+      tds_out_temp_entity: "",
       ...(this._config || {}),
     };
 
-    // Collect all sensor entities for dropdowns
-    const sensorEntities = Object.keys(this.hass.states)
-      .filter((e) => e.startsWith("sensor."))
-      .sort((a, b) => a.localeCompare(b));
-
-    const renderSelect = (label, configKey, value) => html`
-      <label class="field">
-        <span class="field-label">${label}</span>
-        <select
-          class="select"
-          .configValue=${configKey}
-          .value=${value || ""}
-          @change=${this._valueChanged}
-        >
-          <option value="">— Not set —</option>
-          ${sensorEntities.map(
-            (entityId) => html`
-              <option value=${entityId}>${entityId}</option>
-            `
-          )}
-        </select>
-      </label>
-    `;
-
     return html`
-      <div class="card-config">
-        <label class="field">
-          <span class="field-label">Name (optional)</span>
-          <input
-            class="text-input"
-            type="text"
-            .value=${c.name || ""}
-            .configValue=${"name"}
-            @input=${this._valueChanged}
-          />
-        </label>
-
-        <div class="group">
-          <div class="group-label">TDS In side</div>
-          ${renderSelect("TDS in sensor", "tds_in_entity", c.tds_in_entity)}
-          ${renderSelect(
-            "TDS in temperature sensor",
-            "tds_in_temp_entity",
-            c.tds_in_temp_entity
-          )}
-        </div>
-
-        <div class="group">
-          <div class="group-label">Flow</div>
-          ${renderSelect("Flow sensor (required)", "flow_entity", c.flow_entity)}
-        </div>
-
-        <div class="group">
-          <div class="group-label">TDS Out side</div>
-          ${renderSelect("TDS out sensor", "tds_out_entity", c.tds_out_entity)}
-          ${renderSelect(
-            "TDS out temperature sensor",
-            "tds_out_temp_entity",
-            c.tds_out_temp_entity
-          )}
-        </div>
-      </div>
+      <ha-form
+        .hass=${this.hass}
+        .data=${data}
+        .schema=${this._schema}
+        .computeLabel=${this._computeLabel.bind(this)}
+        @value-changed=${this._valueChanged}
+      ></ha-form>
     `;
   }
 }
