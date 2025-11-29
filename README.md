@@ -2,6 +2,10 @@
 
 Custom Lovelace card for Home Assistant that presents TDS before/after a filter, temperatures, and water flow in a compact grid. The card is built with `lit-element`, ships with a visual config editor, and is ideal for reverse osmosis rigs, filtration systems, or any setup that tracks water quality sensors.
 
+<img width="480" height="119" alt="image" src="https://github.com/user-attachments/assets/2883c225-4b2e-441b-ab9e-470578520df6" />
+
+<img width="800" height="387" alt="image" src="https://github.com/user-attachments/assets/2c4287b0-6d96-4114-8e4d-7a3e3413cc07" />
+
 ## Features
 - Three-column layout showing live TDS in/out, temperatures, and flow
 - **Interactive:** Configure tap actions (more-info, navigate, url, service call) for every value and icon
