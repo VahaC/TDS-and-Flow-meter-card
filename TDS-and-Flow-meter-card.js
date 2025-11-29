@@ -134,8 +134,6 @@ class TdsFlowCard extends LitElement {
       throw new Error("Invalid configuration for tds-flow-card");
     }
 
-    // Flow is the core of the card, but we do not throw here,
-    // to avoid red error when user just created the card via UI.
     this._config = {
       name: "TDS & Flow",
       ...config,
@@ -174,15 +172,44 @@ class TdsFlowCard extends LitElement {
     const getStateObj = (entityId) =>
       entityId && hass.states[entityId] ? hass.states[entityId] : undefined;
 
+    // Format value using Home Assistant formatting (including display_precision)
     const formatValue = (stateObj, fallbackUnit) => {
       if (!stateObj) {
         return { value: "–", unit: fallbackUnit || "" };
       }
+
       const state = stateObj.state;
       if (state === "unknown" || state === "unavailable") {
         return { value: "–", unit: fallbackUnit || "" };
       }
+
       const unit = stateObj.attributes?.unit_of_measurement || fallbackUnit || "";
+      let display = state;
+
+      // 1) Try to use built-in Home Assistant formatter
+      try {
+        if (this.hass && typeof this.hass.formatEntityState === "function") {
+          display = this.hass.formatEntityState(stateObj);
+          if (unit && display.endsWith(unit)) {
+            const idx = display.lastIndexOf(unit);
+            const valuePart = display.slice(0, idx).trim();
+            return { value: valuePart, unit };
+          }
+          // If we cannot split, show full display string as value and no separate unit
+          return { value: display, unit: "" };
+        }
+      } catch (e) {
+        // Ignore formatter errors and fall back below
+      }
+
+      // 2) Fallback: use display_precision attribute if available
+      const precision = stateObj.attributes?.display_precision;
+      const num = Number(state);
+      if (typeof precision === "number" && Number.isFinite(num)) {
+        return { value: num.toFixed(precision), unit };
+      }
+
+      // 3) Final fallback: raw state
       return { value: state, unit };
     };
 
@@ -245,7 +272,6 @@ class TdsFlowCard extends LitElement {
 
 /**
  * Editor based on standard Home Assistant components: ha-form + entity selectors.
- * This uses the same UX as built-in cards.
  */
 class TdsFlowCardEditor extends LitElement {
   static get properties() {
@@ -260,7 +286,6 @@ class TdsFlowCardEditor extends LitElement {
   }
 
   get _schema() {
-    // Each field uses HA selector => internally it shows proper entity picker
     return [
       { name: "name", selector: { text: {} } },
       {
