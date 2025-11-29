@@ -459,6 +459,18 @@ class TdsFlowCardEditor extends LitElement {
         font-weight: 600;
       }
 
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .separator {
+        height: 1px;
+        background-color: var(--divider-color, #e0e0e0);
+        margin: 16px 0;
+      }
+
       ha-form {
         --ha-form-padding: 0;
       }
@@ -610,6 +622,53 @@ class TdsFlowCardEditor extends LitElement {
     fireEvent(this, "config-changed", { config: this._config });
   }
 
+  _renderSensorForm(data, schema) {
+    // 0: Entity, 1: Label
+    // 2: Show Icon, 3: Icon
+    // 4: Tap Action, 5: Icon Tap Action
+    return html`
+      <ha-form
+        .hass=${this.hass}
+        .data=${data}
+        .schema=${schema.slice(0, 2)}
+        .computeLabel=${this._computeLabel.bind(this)}
+        @value-changed=${this._valueChanged}
+      ></ha-form>
+      <div class="form-grid">
+        <ha-form
+          .hass=${this.hass}
+          .data=${data}
+          .schema=${[schema[2]]}
+          .computeLabel=${this._computeLabel.bind(this)}
+          @value-changed=${this._valueChanged}
+        ></ha-form>
+        <ha-form
+          .hass=${this.hass}
+          .data=${data}
+          .schema=${[schema[3]]}
+          .computeLabel=${this._computeLabel.bind(this)}
+          @value-changed=${this._valueChanged}
+        ></ha-form>
+      </div>
+      <div class="form-grid">
+        <ha-form
+          .hass=${this.hass}
+          .data=${data}
+          .schema=${[schema[4]]}
+          .computeLabel=${this._computeLabel.bind(this)}
+          @value-changed=${this._valueChanged}
+        ></ha-form>
+        <ha-form
+          .hass=${this.hass}
+          .data=${data}
+          .schema=${[schema[5]]}
+          .computeLabel=${this._computeLabel.bind(this)}
+          @value-changed=${this._valueChanged}
+        ></ha-form>
+      </div>
+    `;
+  }
+
   render() {
     if (!this.hass) {
       return html``;
@@ -634,21 +693,9 @@ class TdsFlowCardEditor extends LitElement {
         <ha-expansion-panel outlined expanded>
           <div slot="header" class="group-title">TDS in</div>
           <div class="group-body">
-            <ha-form
-              .hass=${this.hass}
-              .data=${data}
-              .schema=${this._schemaTdsInMain}
-              .computeLabel=${this._computeLabel.bind(this)}
-              @value-changed=${this._valueChanged}
-            ></ha-form>
-
-            <ha-form
-              .hass=${this.hass}
-              .data=${data}
-              .schema=${this._schemaTdsInTemp}
-              .computeLabel=${this._computeLabel.bind(this)}
-              @value-changed=${this._valueChanged}
-            ></ha-form>
+            ${this._renderSensorForm(data, this._schemaTdsInMain)}
+            <div class="separator"></div>
+            ${this._renderSensorForm(data, this._schemaTdsInTemp)}
           </div>
         </ha-expansion-panel>
 
@@ -656,13 +703,7 @@ class TdsFlowCardEditor extends LitElement {
         <ha-expansion-panel outlined>
           <div slot="header" class="group-title">Flow</div>
           <div class="group-body">
-            <ha-form
-              .hass=${this.hass}
-              .data=${data}
-              .schema=${this._schemaFlow}
-              .computeLabel=${this._computeLabel.bind(this)}
-              @value-changed=${this._valueChanged}
-            ></ha-form>
+            ${this._renderSensorForm(data, this._schemaFlow)}
           </div>
         </ha-expansion-panel>
 
@@ -670,21 +711,9 @@ class TdsFlowCardEditor extends LitElement {
         <ha-expansion-panel outlined>
           <div slot="header" class="group-title">TDS out</div>
           <div class="group-body">
-            <ha-form
-              .hass=${this.hass}
-              .data=${data}
-              .schema=${this._schemaTdsOutMain}
-              .computeLabel=${this._computeLabel.bind(this)}
-              @value-changed=${this._valueChanged}
-            ></ha-form>
-
-            <ha-form
-              .hass=${this.hass}
-              .data=${data}
-              .schema=${this._schemaTdsOutTemp}
-              .computeLabel=${this._computeLabel.bind(this)}
-              @value-changed=${this._valueChanged}
-            ></ha-form>
+            ${this._renderSensorForm(data, this._schemaTdsOutMain)}
+            <div class="separator"></div>
+            ${this._renderSensorForm(data, this._schemaTdsOutTemp)}
           </div>
         </ha-expansion-panel>
       </div>
