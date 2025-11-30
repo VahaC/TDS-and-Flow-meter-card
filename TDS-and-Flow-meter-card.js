@@ -260,11 +260,17 @@ class TdsFlowCard extends LitElement {
     const getStateObj = (entityId) =>
       entityId && hass.states[entityId] ? hass.states[entityId] : undefined;
 
-    const tdsIn = this._formatValue(getStateObj(c.tds_in_entity), "ppm");
-    const tempIn = this._formatValue(getStateObj(c.tds_in_temp_entity), "°C");
-    const flow = this._formatValue(getStateObj(c.flow_entity), "");
-    const tdsOut = this._formatValue(getStateObj(c.tds_out_entity), "ppm");
-    const tempOut = this._formatValue(getStateObj(c.tds_out_temp_entity), "°C");
+    const stateTdsIn = getStateObj(c.tds_in_entity);
+    const stateTempIn = getStateObj(c.tds_in_temp_entity);
+    const stateFlow = getStateObj(c.flow_entity);
+    const stateTdsOut = getStateObj(c.tds_out_entity);
+    const stateTempOut = getStateObj(c.tds_out_temp_entity);
+
+    const tdsIn = this._formatValue(stateTdsIn, "ppm");
+    const tempIn = this._formatValue(stateTempIn, "°C");
+    const flow = this._formatValue(stateFlow, "");
+    const tdsOut = this._formatValue(stateTdsOut, "ppm");
+    const tempOut = this._formatValue(stateTempOut, "°C");
 
     // Per-sensor icon visibility
     const showIconTdsIn = !!c.show_icon_tds_in;
@@ -273,12 +279,24 @@ class TdsFlowCard extends LitElement {
     const showIconTdsOut = !!c.show_icon_tds_out;
     const showIconTdsOutTemp = !!c.show_icon_tds_out_temp;
 
+    // Helper to pick icon: config > entity attribute > default
+    const getIcon = (configIcon, stateObj, defaultIcon) =>
+      configIcon || stateObj?.attributes?.icon || defaultIcon;
+
     // Icons with defaults
-    const iconTdsIn = c.icon_tds_in || "mdi:water-opacity";
-    const iconTdsInTemp = c.icon_tds_in_temp || "mdi:thermometer";
-    const iconFlow = c.icon_flow || "mdi:water";
-    const iconTdsOut = c.icon_tds_out || "mdi:water-opacity";
-    const iconTdsOutTemp = c.icon_tds_out_temp || "mdi:thermometer";
+    const iconTdsIn = getIcon(c.icon_tds_in, stateTdsIn, "mdi:water-opacity");
+    const iconTdsInTemp = getIcon(
+      c.icon_tds_in_temp,
+      stateTempIn,
+      "mdi:thermometer-water"
+    );
+    const iconFlow = getIcon(c.icon_flow, stateFlow, "mdi:water");
+    const iconTdsOut = getIcon(c.icon_tds_out, stateTdsOut, "mdi:water-opacity");
+    const iconTdsOutTemp = getIcon(
+      c.icon_tds_out_temp,
+      stateTempOut,
+      "mdi:thermometer-water"
+    );
 
     // Labels with defaults
     const labelTdsIn = c.label_tds_in || "TDS in";
@@ -481,6 +499,13 @@ class TdsFlowCardEditor extends LitElement {
     this._config = config || {};
   }
 
+  _getIconPlaceholder(entityName, defaultIcon) {
+    if (!this.hass || !this._config) return defaultIcon;
+    const entityId = this._config[entityName];
+    const stateObj = entityId ? this.hass.states[entityId] : undefined;
+    return stateObj?.attributes?.icon || defaultIcon;
+  }
+
   // Base/card-level settings
   get _schemaBase() {
     return [{ name: "name", selector: { text: {} } }];
@@ -488,11 +513,15 @@ class TdsFlowCardEditor extends LitElement {
 
   // TDS in: main sensor
   get _schemaTdsInMain() {
+    const placeholder = this._getIconPlaceholder(
+      "tds_in_entity",
+      "mdi:water-opacity"
+    );
     return [
       { name: "tds_in_entity", selector: { entity: { domain: "sensor" } } },
       { name: "label_tds_in", selector: { text: {} } },
       { name: "show_icon_tds_in", selector: { boolean: {} } },
-      { name: "icon_tds_in", selector: { icon: {} } },
+      { name: "icon_tds_in", selector: { icon: { placeholder } } },
       { name: "tds_in_tap_action", selector: { ui_action: {} } },
       { name: "tds_in_icon_tap_action", selector: { ui_action: {} } },
     ];
@@ -500,11 +529,15 @@ class TdsFlowCardEditor extends LitElement {
 
   // TDS in: temperature
   get _schemaTdsInTemp() {
+    const placeholder = this._getIconPlaceholder(
+      "tds_in_temp_entity",
+      "mdi:thermometer-water"
+    );
     return [
       { name: "tds_in_temp_entity", selector: { entity: { domain: "sensor" } } },
       { name: "label_tds_in_temp", selector: { text: {} } },
       { name: "show_icon_tds_in_temp", selector: { boolean: {} } },
-      { name: "icon_tds_in_temp", selector: { icon: {} } },
+      { name: "icon_tds_in_temp", selector: { icon: { placeholder } } },
       { name: "tds_in_temp_tap_action", selector: { ui_action: {} } },
       { name: "tds_in_temp_icon_tap_action", selector: { ui_action: {} } },
     ];
@@ -512,11 +545,12 @@ class TdsFlowCardEditor extends LitElement {
 
   // Flow group
   get _schemaFlow() {
+    const placeholder = this._getIconPlaceholder("flow_entity", "mdi:water");
     return [
       { name: "flow_entity", selector: { entity: { domain: "sensor" } } },
       { name: "label_flow", selector: { text: {} } },
       { name: "show_icon_flow", selector: { boolean: {} } },
-      { name: "icon_flow", selector: { icon: {} } },
+      { name: "icon_flow", selector: { icon: { placeholder } } },
       { name: "flow_tap_action", selector: { ui_action: {} } },
       { name: "flow_icon_tap_action", selector: { ui_action: {} } },
     ];
@@ -524,11 +558,15 @@ class TdsFlowCardEditor extends LitElement {
 
   // TDS out: main sensor
   get _schemaTdsOutMain() {
+    const placeholder = this._getIconPlaceholder(
+      "tds_out_entity",
+      "mdi:water-opacity"
+    );
     return [
       { name: "tds_out_entity", selector: { entity: { domain: "sensor" } } },
       { name: "label_tds_out", selector: { text: {} } },
       { name: "show_icon_tds_out", selector: { boolean: {} } },
-      { name: "icon_tds_out", selector: { icon: {} } },
+      { name: "icon_tds_out", selector: { icon: { placeholder } } },
       { name: "tds_out_tap_action", selector: { ui_action: {} } },
       { name: "tds_out_icon_tap_action", selector: { ui_action: {} } },
     ];
@@ -536,11 +574,15 @@ class TdsFlowCardEditor extends LitElement {
 
   // TDS out: temperature
   get _schemaTdsOutTemp() {
+    const placeholder = this._getIconPlaceholder(
+      "tds_out_temp_entity",
+      "mdi:thermometer-water"
+    );
     return [
       { name: "tds_out_temp_entity", selector: { entity: { domain: "sensor" } } },
       { name: "label_tds_out_temp", selector: { text: {} } },
       { name: "show_icon_tds_out_temp", selector: { boolean: {} } },
-      { name: "icon_tds_out_temp", selector: { icon: {} } },
+      { name: "icon_tds_out_temp", selector: { icon: { placeholder } } },
       { name: "tds_out_temp_tap_action", selector: { ui_action: {} } },
       { name: "tds_out_temp_icon_tap_action", selector: { ui_action: {} } },
     ];
